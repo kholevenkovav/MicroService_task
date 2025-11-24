@@ -1,8 +1,8 @@
 ## 1. Постановка задачи
 
 - **Цель:** обнаружение аномалий в температуре морозильных камер (два `io_id`).
-- **Подход:** методы без учителя (IsolationForest, One-Class SVM, DBSCAN, LOF, PCA,
-  PCA-IF, PCA-OCSVM), скользящие окна по минутной сетке, кодирование времени.
+- **Подход:** методы без учителя (IsolationForest, One-Class SVM, LOF, PCA,
+  PCA-IF, PCA-OCSVM, ETS, ETS-IF, ETS-OCSVM), скользящие окна по минутной сетке, кодирование времени.
 - **Оценка:** по размеченному датасету (`annotated_dataset.csv`, поле `anomaly` ∈ {0,1}).
   Считаются ROC-AUC, F1, Accuracy, Precision, Recall; агрегирование: **mean** и **IQR**
   по 5 сдвигам на 100-дневном интервале.
@@ -25,7 +25,7 @@
 services/
   collector/       → /batch
   storage/         → /runs/*, /metrics/*
-  ml/              → (train_evaluate, status)  ← в этом архиве main удалён
+  ml/              → (train_evaluate, status)
   webmaster/       → /scenarios/*
   visualization/   → дашборд http://localhost:8014
 ```
@@ -35,7 +35,7 @@ services/
 В корне проекта создана папка `./data` и лежат:
 
 - `freezer_temperature.csv` — сырая минутная телеметрия (колонки:
-  `event_timestamp, io_id, value, value_min, value_max`). `value_min/max` игнорируются.
+  `event_timestamp, io_id, value, value_min, value_max`). `value_min/max` не нужны.
 - `annotated_dataset.csv` — размеченные точки (те же колонки + `anomaly`).
 
 Collector будет нормализовать имена колонок и удалять `value_min/value_max`.
@@ -49,7 +49,7 @@ Collector будет нормализовать имена колонок и у�
   `cyclic` (сезонное кодирование), `sin_cos_cyclic` (комбинация).
 - **Сплиты:** `70_30`, `50_50`, `30_70` — в сутках, суммарно 100.
 - **Сдвиги:** 5 равномерных сдвигов 100-дневного окна (циклически).
-- **Модели:** IF, OCSVM, DBSCAN, LOF, PCA-reconstruction, IF-PCA, OCSVM-PCA.
+- **Модели:** IF, OCSVM, LOF, PCA-reconstruction, PCA-IF, PCA-OCSVM, ETS, ETS-IF, ETS-OCSVM.
 - **Метрики:** ROC-AUC, F1, Accuracy, Precision, Recall; агрегирование **mean** и **IQR**
   по сдвигам; выбор гиперпараметров — по ROC-AUC (mean).
 
@@ -114,8 +114,8 @@ Collector логирует запросы `/batch`. Storage — создание
    - починить импорты,
    - стабилизировать пайплайн.
 2. **Добавить/улучшить методы:**
-   - **DBSCAN** - он сильно отличается от других методов.
-   - **ETS (Exponential Smoothing)** - в основном коде для наусной работы еще это не релизовано.
+   - **ETS (Exponential Smoothing)** - в основном коде для научной работы еще это в процессе.
+   - Для других методов проверить гиперпараметры.
 3. **Логи промежуточных шагов обучения:**
    - писать в `ml.log` события по каждому **shift** (индекс сдвига, интервалы train/test,
      размеры `Xtr/Xte`, промежуточные метрики по гиперпарам).
