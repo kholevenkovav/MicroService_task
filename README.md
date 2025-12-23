@@ -2,7 +2,7 @@
 
 - **Цель:** обнаружение аномалий в температуре морозильных камер (два `io_id`).
 - **Подход:** методы без учителя (IsolationForest, One-Class SVM, LOF, PCA,
-  PCA-IF, PCA-OCSVM, ETS, ETS-IF, ETS-OCSVM), скользящие окна по минутной сетке, кодирование времени.
+  PCA-IF, PCA-OCSVM), скользящие окна по минутной сетке, кодирование времени.
 - **Оценка:** по размеченному датасету (`annotated_dataset.csv`, поле `anomaly` ∈ {0,1}).
   Считаются ROC-AUC, F1, Accuracy, Precision, Recall.
 
