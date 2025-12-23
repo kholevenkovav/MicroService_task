@@ -4,30 +4,28 @@
 - **Подход:** методы без учителя (IsolationForest, One-Class SVM, LOF, PCA,
   PCA-IF, PCA-OCSVM, ETS, ETS-IF, ETS-OCSVM), скользящие окна по минутной сетке, кодирование времени.
 - **Оценка:** по размеченному датасету (`annotated_dataset.csv`, поле `anomaly` ∈ {0,1}).
-  Считаются ROC-AUC, F1, Accuracy, Precision, Recall; агрегирование: **mean** и **IQR**
-  по 5 сдвигам на 100-дневном интервале.
+  Считаются ROC-AUC, F1, Accuracy, Precision, Recall.
 
 ## 2. Архитектура системы
 
-Сервисы и их роли (планируемая архитектура):
+Сервисы и их роли:
 
 - **Collector (FastAPI):** отдача батчи данных из CSV (сырая/аннотированная серия),
   нормализация колонок.
 - **Storage (FastAPI + SQLite):** хранение «запусков» (`runs`) и метрик (`metrics`).
 - **ML (FastAPI, sklearn):** - обучение и оценка моделей, агрегация метрик.
 - **Web Master (API-gateway):** сценарии верхнего уровня, агрегация данных из ML/Storage.
-- **Visualization (Dash):** веб-дашборд для просмотра лучшей конфигурации и метрик
-  (mean ± IQR) по выбранному `io_id` и модели.
+- **Visualization (Dash):** веб-дашборд для просмотра лучшей конфигурации и метрик по выбранному `io_id` и модели.
 
 Коммуникации - REST. Конфигурации - YAML. Контейнеризация - Docker compose.
 
 ```
 services/
-  collector/       → /batch
-  storage/         → /runs/*, /metrics/*
-  ml/              → (train_evaluate, status)
-  webmaster/       → /scenarios/*
-  visualization/   → дашборд http://localhost:8014
+  collector/ - /batch
+  storage/ - /runs/*, /metrics/*
+  ml/ - train_evaluate, status
+  webmaster/ - /scenarios/*
+  visualization/ - дашборд http://localhost:8014
 ```
 
 ## 3. Данные
@@ -44,14 +42,13 @@ Collector будет нормализовать имена колонок и у�
 
 ЧТо будет содержать main.py:
 - **Ресэмплинг:** интерполяция/выравнивание по минутной сетке.
-- **Скользящие окна:** 1, 5, 10, 15, 30, 60 минут; признаки окна: mean/std/min/max/median/var/trend/q25/q75.
+- **Скользящие окна:** 5, 10, 15, 30, 60 минут; признаки окна: mean/std/min/max/median/var/trend/q25/q75.
 - **Кодирование времени:** `one_hot` (час/минута), `sin_cos` (час, минута),
   `cyclic` (сезонное кодирование), `sin_cos_cyclic` (комбинация).
 - **Сплиты:** `70_30`, `50_50`, `30_70` — в сутках, суммарно 100.
 - **Сдвиги:** 5 равномерных сдвигов 100-дневного окна (циклически).
 - **Модели:** IF, OCSVM, LOF, PCA-reconstruction, PCA-IF, PCA-OCSVM, ETS, ETS-IF, ETS-OCSVM.
-- **Метрики:** ROC-AUC, F1, Accuracy, Precision, Recall; агрегирование **mean** и **IQR**
-  по сдвигам; выбор гиперпараметров — по ROC-AUC (mean).
+- **Метрики:** ROC-AUC, F1, Accuracy, Precision, Recall.
 
 ## 5. Развёртывание
 
@@ -67,10 +64,10 @@ docker compose up -d --build
 
 Сервисы по умолчанию - будут реализованы через localhost:
 
-- Collector:     http://localhost:8010/docs  
-- Storage:       http://localhost:8011/docs  
-- ML:            http://localhost:8012/docs
-- Web Master:    http://localhost:8013/docs  
+- Collector: http://localhost:8010/docs  
+- Storage: http://localhost:8011/docs  
+- ML: http://localhost:8012/docs
+- Web Master: http://localhost:8013/docs  
 - Visualization: http://localhost:8014
 
 ## 6. Сценарии использования (минимальный набор)
